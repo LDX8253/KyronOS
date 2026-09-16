@@ -7,9 +7,10 @@
 - [x] Text console identity
 - [x] KSFS superblock format and validation core
 - [x] Generic block-device interface
+- [x] PCI configuration-space scanning and IDE/ATA PIO block-device prototype
 - [ ] x86-64 long-mode entry and memory map parsing
 - [x] PS/2 keyboard and interactive shell
-- [ ] KSFS inode, directory, and file operations on persistent storage
+- [x] KSFS inode, directory, and file operations on persistent storage
 - [ ] Storage controller and partition support for IDE, SATA, SCSI, NVMe, eMMC, USB, and SD devices
 - [ ] Installer with live-image-only setup command
 - [ ] EFI-native boot path

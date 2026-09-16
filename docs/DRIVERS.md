@@ -1,5 +1,5 @@
 # Drivers
 
-KyronOS reserves a generic device/block-device boundary. Keyboard and VGA console support are the first hardware targets. USB EHCI (USB 2.0) and xHCI (USB 3.x) detection/enumeration, plus optical-device read support, are planned behind this boundary.
+KyronOS uses a generic device/block-device boundary. PCI configuration-space scanning and polling IDE/ATA PIO support are implemented first; the IDE backend exposes 4 KiB blocks to KSFS through 28-bit LBA.
 
-There are intentionally no SATA, AHCI, NVMe, IDE, or general internal-disk drivers. A future USB mass-storage driver can provide a `BlockDevice` without changing KSFS.
+SATA/AHCI, NVMe, SCSI, eMMC, SD, USB mass-storage, partition discovery, and interrupt/DMA transport are still pending. Future controller drivers can provide a `BlockDevice` without changing KSFS or the installer.

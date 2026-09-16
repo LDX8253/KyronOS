@@ -1,6 +1,6 @@
 # Windows development
 
-KyronOS can be developed on Windows without WSL2. The repository's build commands use POSIX shell utilities (`mkdir`, `cp`, `rm`, and `command -v`), so run them from an MSYS2 terminal rather than directly from PowerShell.
+KyronOS can be developed on Windows, but the build and ISO creation process still requires either WSL2 or a virtual machine. The repository's Makefile depends on the GRUB rescue tools (`grub-mkrescue` or `grub2-mkrescue`) and `xorriso`, which are not available directly from a plain MSYS2 installation.
 
 ## Install the Windows tools
 
@@ -20,7 +20,9 @@ KyronOS can be developed on Windows without WSL2. The repository's build command
    ```
 
    MSYS2 does not provide the `grub` or `xorriso` packages used to create this
-   project's bootable ISO. Do not add those names to the `pacman` command.
+   project's bootable ISO. Do not add those names to the `pacman` command. This
+   means the build still requires either WSL2 or a VM with a Linux distro such as
+   Debian or Fedora for `make iso`.
 
 4. Install or add an i386 ELF freestanding toolchain and the GRUB rescue tools.
    The kernel Makefile expects:
@@ -31,13 +33,14 @@ KyronOS can be developed on Windows without WSL2. The repository's build command
 
    The normal Windows MinGW linker targets Windows PE files and is not a substitute for the ELF linker used by this repository. Keep the i386 ELF toolchain's `bin` directory on `PATH` before the Windows compiler directories.
 
-   You also need `grub-mkrescue` (or `grub2-mkrescue`) and `xorriso` on `PATH` for
+   You also need `grub-mkrescue` (or `grub2-mkrescue`), the GRUB `x86_64-efi`
+   modules, `mformat` from the `mtools` package, and `xorriso` on `PATH` for
    `make iso`. There is no official MSYS2 package for these tools. The reliable
-   Windows-without-WSL2 option is to build the ISO in a small Debian or Fedora
-   VirtualBox VM, sharing this repository folder with the VM. Source editing and
-   Git can remain on Windows. A prebuilt Windows-compatible GRUB rescue bundle
-   is also possible, but it must provide both commands and its own GRUB data
-   directory.
+   Windows option is to either use WSL2 for the build or to build the ISO in a
+   small Debian or Fedora VirtualBox VM, sharing this repository folder with the
+   VM. Source editing and Git can remain on Windows. A prebuilt Windows-compatible
+   GRUB rescue bundle is also possible, but it must provide both commands and its
+   own GRUB data directory.
 
 ## Build from MSYS2
 
@@ -80,4 +83,4 @@ make test
 
 ## PowerShell note
 
-PowerShell is fine for editing the source and running Git commands. Use the MSYS2 terminal for `setup.sh`, `make`, and the POSIX build commands in the Makefile. Install VirtualBox separately, ensure `VBoxManage` is on the MSYS2 `PATH`, and run `make run` or `make run EFI=on` from MSYS2 after the ISO toolchain is available. Without a Windows GRUB rescue tool, use a Debian or Fedora VirtualBox build VM for `make iso` and `make run`.
+PowerShell is fine for editing the source and running Git commands. Use the MSYS2 terminal for `setup.sh`, `make`, and the POSIX build commands in the Makefile. Install VirtualBox separately, ensure `VBoxManage` is on the MSYS2 `PATH`, and run `make run` or `make run EFI=on` from MSYS2 after the ISO toolchain is available. If you do not have WSL2, then use a Debian or Fedora VirtualBox build VM for `make iso` and `make run`.

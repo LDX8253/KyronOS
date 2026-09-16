@@ -3,7 +3,7 @@
 For Windows development without WSL2, see [WINDOWS.md](WINDOWS.md).
 
 1. Run `./setup.sh`.
-2. Install the printed prerequisites if checks fail. On Fedora, use `sudo dnf install gcc gcc-c++ make nasm grub2-tools-extra xorriso gdb`. On Debian/Ubuntu, use `sudo apt install build-essential nasm grub-pc-bin grub-common xorriso gdb`. Install VirtualBox separately.
+2. Install the printed prerequisites if checks fail. On Fedora, use `sudo dnf install gcc gcc-c++ make nasm grub2-tools-extra grub2-efi-x64-modules mtools xorriso gdb`. On Debian/Ubuntu, use `sudo apt install build-essential nasm grub-pc-bin grub-efi-amd64-bin grub-common mtools xorriso gdb`. Install VirtualBox separately.
 3. Run `make kernel`.
 4. Run `make iso` to create `build/kyronos.iso`.
 5. Run `make run` to boot it in VirtualBox, or `make run EFI=on` to boot it with VirtualBox EFI firmware.
