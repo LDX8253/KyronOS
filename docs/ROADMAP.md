@@ -1,6 +1,6 @@
 # Roadmap
 
-## KyronOS
+## Alpha 2
 
 - [x] Project structure and build pipeline
 - [x] Multiboot2 kernel bootstrap
@@ -8,8 +8,11 @@
 - [x] KSFS superblock format and validation core
 - [x] Generic block-device interface
 - [ ] x86-64 long-mode entry and memory map parsing
-- [ ] PS/2 keyboard and interactive shell
-- [ ] KSFS inode, directory, and file operations
+- [x] PS/2 keyboard and interactive shell
+- [ ] KSFS inode, directory, and file operations on persistent storage
+- [ ] Storage controller and partition support for IDE, SATA, SCSI, NVMe, eMMC, USB, and SD devices
+- [ ] Installer with live-image-only setup command
+- [ ] EFI-native boot path
 - [ ] `ksfs-mkfs` image tool
 - [ ] USB EHCI/xHCI detection
 - [ ] CD/DVD read support

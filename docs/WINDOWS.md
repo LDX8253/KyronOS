@@ -16,7 +16,7 @@ KyronOS can be developed on Windows without WSL2. The repository's build command
 3. Install the shell tools and host utilities:
 
    ```sh
-   pacman -S --needed base-devel nasm grub xorriso qemu gdb
+   pacman -S --needed base-devel nasm grub xorriso gdb
    ```
 
 4. Install or add an i386 ELF freestanding toolchain. The kernel Makefile expects:
@@ -50,7 +50,7 @@ The ISO is written to `build/kyronos.iso`. To debug it, use:
 make debug
 ```
 
-In another MSYS2 terminal, connect GDB to QEMU:
+In another MSYS2 terminal, connect GDB to a separately configured VirtualBox debug provider:
 
 ```sh
 gdb build/kyronos.kernel
@@ -68,4 +68,4 @@ make test
 
 ## PowerShell note
 
-PowerShell is fine for editing the source and running Git commands. Use the MSYS2 terminal for `setup.sh`, `make`, ISO creation, and the POSIX build commands in the Makefile.
+PowerShell is fine for editing the source and running Git commands. Use the MSYS2 terminal for `setup.sh`, `make`, ISO creation, and the POSIX build commands in the Makefile. Install VirtualBox separately and run `make run` or `make run EFI=on` from MSYS2.

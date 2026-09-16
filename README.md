@@ -21,13 +21,13 @@ Verify the host tools without installing anything:
 On Fedora:
 
 ```sh
-sudo dnf install gcc gcc-c++ make nasm grub2-tools-extra xorriso qemu-system-x86-core qemu-ui-gtk gdb
+sudo dnf install gcc gcc-c++ make nasm grub2-tools-extra xorriso gdb
 ```
 
 On Debian or Ubuntu:
 
 ```sh
-sudo apt install build-essential nasm grub-pc-bin grub-common xorriso qemu-system-x86 gdb
+sudo apt install build-essential nasm grub-pc-bin grub-common xorriso gdb
 ```
 
 Build and run the ISO:
@@ -37,11 +37,10 @@ make iso
 make run
 ```
 
-The generated image is `build/kyronos.iso`. For debugging, run `make debug`, then connect with:
+The generated image is `build/kyronos.iso`. VirtualBox can boot it with `make run`; use `make run EFI=on` for an EFI VM. The `debug` target only prepares the image because VirtualBox debugging requires separate VM debug configuration.
 
 ```sh
 gdb build/kyronos.kernel
-(gdb) target remote :1234
 ```
 
 ## Shell
@@ -68,7 +67,9 @@ The default root layout is:
 ├── home/
 ├── tmp/
 ├── dev/
-└── bin/
+├── bin/
+└── usr/
+	└── bin/
 ```
 
 User home directories live under `/home`. Inside the active user's home, the prompt uses `~`, for example `[kyron]:~#` and `[kyron]:~/projects#`.
@@ -77,6 +78,6 @@ User home directories live under `/home`. Inside the active user's home, the pro
 
 Implemented foundations include the Multiboot2 boot image, VGA console with scrolling and cursor tracking, PS/2 keyboard input with Shift and Tab completion, shell navigation, user home-directory handling, KSFS superblock validation, and a generic block-device interface.
 
-KyronOS does not yet provide native EHCI/xHCI controller transport, USB HID device enumeration, persistent disk drivers, a complete on-disk KSFS file tree, or a graphical environment. USB boot-protocol decoding is present, but native USB keyboard support requires the controller and interrupt-transfer layers.
+KyronOS does not yet provide native storage-controller transport, partition discovery, persistent disk installation, or a complete on-disk KSFS file tree. USB boot-protocol decoding is present, but native USB keyboard support requires the controller and interrupt-transfer layers. The current GRUB image can be selected in VirtualBox with BIOS or EFI firmware; the installer and persistent disk path remain future work.
 
 See [docs/BUILDING.md](docs/BUILDING.md), [docs/WINDOWS.md](docs/WINDOWS.md), [docs/KSFS.md](docs/KSFS.md), [docs/USB.md](docs/USB.md), and [docs/ROADMAP.md](docs/ROADMAP.md) for details.

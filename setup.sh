@@ -14,11 +14,11 @@ if command -v grub2-mkrescue >/dev/null 2>&1 || command -v grub-mkrescue >/dev/n
 else
     printf 'missing grub-mkrescue (needed for ISO)\n'
 fi
-for tool in xorriso qemu-system-x86_64 gdb; do
+for tool in xorriso VBoxManage gdb; do
     if command -v "$tool" >/dev/null 2>&1; then
         printf 'found %-18s %s\n' "$tool" "$(command -v "$tool")"
     else
-        printf 'missing %s (needed for ISO/run/debug)\n' "$tool"
+        printf 'missing %s (needed for ISO/VirtualBox/debug)\n' "$tool"
     fi
 done
 if [ "$missing" -ne 0 ]; then
@@ -26,10 +26,11 @@ if [ "$missing" -ne 0 ]; then
 
 KyronOS needs a freestanding build toolchain.
 On Fedora:
-    sudo dnf install gcc gcc-c++ make nasm grub2-tools-extra xorriso qemu-system-x86-core qemu-ui-gtk gdb
+        sudo dnf install gcc gcc-c++ make nasm grub2-tools-extra xorriso gdb
 On Debian/Ubuntu:
-  sudo apt install build-essential nasm grub-pc-bin grub-common xorriso qemu-system-x86 gdb
+    sudo apt install build-essential nasm grub-pc-bin grub-common xorriso gdb
 A dedicated i686-elf cross compiler is recommended for production builds.
+Install VirtualBox separately for running the ISO.
 No packages were installed by this script.
 MSG
     exit 1

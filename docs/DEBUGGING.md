@@ -1,6 +1,6 @@
 # Debugging
 
-Run `make debug`; QEMU pauses at startup and exposes a GDB stub on TCP port 1234. In another terminal:
+Run `make debug` to build the debug image. VirtualBox debugging must be enabled through a separately configured VirtualBox debug provider before connecting GDB:
 
 ```gdb
 gdb build/kyronos.kernel
