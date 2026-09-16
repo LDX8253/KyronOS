@@ -229,8 +229,12 @@ void command(char* line) {
         uint32_t directory = directory_for_path(argument(line), current_directory);
         if (directory == max_entries) console::write_line("Directory not found.", 0x0C); else list(directory);
     }
-    else if (line[0] == 't' && line[1] == 'o' && line[2] == 'u' && line[3] == 'c' && line[4] == 'h' && line[5] == ' ') console::write_line(create(argument(line), false, current_directory) ? "OK" : "Unable to create file.", 0x0B);
-    else if (line[0] == 'm' && line[1] == 'k' && line[2] == 'd' && line[3] == 'i' && line[4] == 'r' && line[5] == ' ') console::write_line(create(argument(line), true, current_directory) ? "OK" : "Unable to create directory.", 0x0B);
+    else if (line[0] == 't' && line[1] == 'o' && line[2] == 'u' && line[3] == 'c' && line[4] == 'h' && line[5] == ' ') {
+        console::write_line(create(argument(line), false, current_directory) ? "OK" : "Unable to create file.", 0x0B);
+    }
+    else if (line[0] == 'm' && line[1] == 'k' && line[2] == 'd' && line[3] == 'i' && line[4] == 'r' && line[5] == ' ') {
+        console::write_line(create(argument(line), true, current_directory) ? "OK" : "Unable to create directory.", 0x0B);
+    }
     else if (line[0] == 'r' && line[1] == 'm' && line[2] == ' ') remove_entry(argument(line));
     else if (line[0] == 'r' && line[1] == 'm' && line[2] == 'd' && line[3] == 'i' && line[4] == 'r' && line[5] == ' ') remove_entry(argument(line));
     else if (line[0] == 'w' && line[1] == 'r' && line[2] == 'i' && line[3] == 't' && line[4] == 'e' && line[5] == ' ') write_file(argument(line), false);
@@ -264,6 +268,17 @@ namespace shell {
     create_file("README", static_cast<uint32_t>(dev - entries), "Device nodes appear here.\n");
     create_file("README", static_cast<uint32_t>(tmp - entries), "Temporary files live here.\n");
     create_file("README", 0, "KyronOS Alpha 2 system root.\n");
+    create_file("help", static_cast<uint32_t>(usr_bin - entries), "#!/kyron-shell\n# Edit this command description.\nhelp [command]\n");
+    create_file("ls", static_cast<uint32_t>(usr_bin - entries), "#!/kyron-shell\n# List directory entries.\n");
+    create_file("cd", static_cast<uint32_t>(usr_bin - entries), "#!/kyron-shell\n# Change the current directory.\n");
+    create_file("cat", static_cast<uint32_t>(usr_bin - entries), "#!/kyron-shell\n# Print a text file.\n");
+    create_file("echo", static_cast<uint32_t>(usr_bin - entries), "#!/kyron-shell\n# Print text to the console.\n");
+    create_file("touch", static_cast<uint32_t>(usr_bin - entries), "#!/kyron-shell\n# Create an empty file.\n");
+    create_file("mkdir", static_cast<uint32_t>(usr_bin - entries), "#!/kyron-shell\n# Create a directory.\n");
+    create_file("rm", static_cast<uint32_t>(usr_bin - entries), "#!/kyron-shell\n# Remove a file.\n");
+    create_file("kernel.cpp", static_cast<uint32_t>(system - entries), "// KyronOS kernel source notes.\n// Edit system services here when source editing is available.\n");
+    create_file("shell.cpp", static_cast<uint32_t>(system - entries), "// KyronOS shell source notes.\n// Built-in command implementations live in the kernel.\n");
+    create_file("shell.conf", static_cast<uint32_t>(etc - entries), "hostname=kyron\nroot_mode=ram\n");
     current_directory = static_cast<uint32_t>(kyron_home - entries);
     refresh_path();
     char line[128];
