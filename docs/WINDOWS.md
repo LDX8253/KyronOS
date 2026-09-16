@@ -13,19 +13,31 @@ KyronOS can be developed on Windows without WSL2. The repository's build command
 
    Close and reopen the terminal if MSYS2 asks you to do so, then run the update again.
 
-3. Install the shell tools and host utilities:
+3. Install the MSYS2 tools available from the UCRT64 environment:
 
    ```sh
-   pacman -S --needed base-devel nasm grub xorriso gdb
+   pacman -S --needed base-devel nasm
    ```
 
-4. Install or add an i386 ELF freestanding toolchain. The kernel Makefile expects:
+   MSYS2 does not provide the `grub` or `xorriso` packages used to create this
+   project's bootable ISO. Do not add those names to the `pacman` command.
+
+4. Install or add an i386 ELF freestanding toolchain and the GRUB rescue tools.
+   The kernel Makefile expects:
 
    - `gcc` and `g++` that accept `-m32` and produce ELF relocatable objects;
    - GNU `ld` that accepts `-m elf_i386`;
    - `nasm` for 32-bit assembly.
 
    The normal Windows MinGW linker targets Windows PE files and is not a substitute for the ELF linker used by this repository. Keep the i386 ELF toolchain's `bin` directory on `PATH` before the Windows compiler directories.
+
+   You also need `grub-mkrescue` (or `grub2-mkrescue`) and `xorriso` on `PATH` for
+   `make iso`. There is no official MSYS2 package for these tools. The reliable
+   Windows-without-WSL2 option is to build the ISO in a small Debian or Fedora
+   VirtualBox VM, sharing this repository folder with the VM. Source editing and
+   Git can remain on Windows. A prebuilt Windows-compatible GRUB rescue bundle
+   is also possible, but it must provide both commands and its own GRUB data
+   directory.
 
 ## Build from MSYS2
 
@@ -68,4 +80,4 @@ make test
 
 ## PowerShell note
 
-PowerShell is fine for editing the source and running Git commands. Use the MSYS2 terminal for `setup.sh`, `make`, ISO creation, and the POSIX build commands in the Makefile. Install VirtualBox separately and run `make run` or `make run EFI=on` from MSYS2.
+PowerShell is fine for editing the source and running Git commands. Use the MSYS2 terminal for `setup.sh`, `make`, and the POSIX build commands in the Makefile. Install VirtualBox separately, ensure `VBoxManage` is on the MSYS2 `PATH`, and run `make run` or `make run EFI=on` from MSYS2 after the ISO toolchain is available. Without a Windows GRUB rescue tool, use a Debian or Fedora VirtualBox build VM for `make iso` and `make run`.
