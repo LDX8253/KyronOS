@@ -23,9 +23,6 @@ uint32_t length(const char* text) { uint32_t size = 0; while (text[size]) ++size
 bool equals(const char* left, const char* right) {
     uint32_t index = 0; while (left[index] || right[index]) { if (left[index] != right[index]) return false; ++index; } return true;
 }
-bool starts_with(const char* text, const char* prefix) {
-    uint32_t index = 0; while (prefix[index]) { if (text[index] != prefix[index]) return false; ++index; } return true;
-}
 void copy(char* destination, const char* source, uint32_t capacity) {
     uint32_t index = 0; while (index + 1 < capacity && source[index]) { destination[index] = source[index]; ++index; } destination[index] = 0;
 }
@@ -43,10 +40,34 @@ void build_path(uint32_t directory, char* destination, uint32_t capacity) {
 void refresh_path() { build_path(current_directory, cwd, sizeof(cwd)); }
 const char* argument(char* line) { while (*line && *line != ' ') ++line; while (*line == ' ') ++line; return line; }
 Entry* find(const char* name, uint32_t parent) { for (uint32_t i = 0; i < max_entries; ++i) if (entries[i].used && entries[i].parent == parent && equals(entries[i].name, name)) return &entries[i]; return nullptr; }
+uint32_t directory_for_path(const char* path, uint32_t starting_directory) {
+    uint32_t directory = (*path == '/') ? 0 : starting_directory;
+    if (*path == '/') ++path;
+    while (*path) {
+        char component[name_size];
+        uint32_t index = 0;
+        while (path[index] && path[index] != '/' && index + 1 < name_size) { component[index] = path[index]; ++index; }
+        component[index] = 0;
+        while (path[index] == '/') ++index;
+        path += index;
+        if (!*component || equals(component, ".")) continue;
+        if (equals(component, "..")) { if (directory != 0) directory = entries[directory].parent; continue; }
+        Entry* entry = find(component, directory);
+        if (!entry || !entry->directory) return max_entries;
+        directory = static_cast<uint32_t>(entry - entries);
+    }
+    return directory;
+}
 Entry* create(const char* name, bool directory, uint32_t parent) {
     if (!*name || length(name) >= name_size || find(name, parent)) return nullptr;
     for (uint32_t i = 0; i < max_entries; ++i) if (!entries[i].used) { entries[i].used = true; entries[i].directory = directory; entries[i].parent = parent; copy(entries[i].name, name, name_size); return &entries[i]; }
     return nullptr;
+}
+Entry* create_file(const char* name, uint32_t parent, const char* contents) {
+    Entry* entry = create(name, false, parent);
+    if (!entry) return nullptr;
+    copy(entry->data, contents, data_size);
+    return entry;
 }
 void add_user(const char* name) {
     if (!*name || length(name) >= name_size) { console::write_line("Invalid username.", 0x0C); return; }
@@ -66,22 +87,56 @@ void switch_user(const char* name) {
     console::write_line("User not found.", 0x0C);
 }
 void write_prompt_path() {
-    char home_path[64]; build_path(users[current_user].home, home_path, sizeof(home_path));
-    uint32_t home_length = length(home_path); uint32_t path_length = length(cwd);
-    bool inside_home = equals(cwd, home_path) || (path_length > home_length && cwd[home_length] == '/' && starts_with(cwd, home_path));
-    if (inside_home) { console::write("~", 0x0D); if (path_length > home_length) console::write(cwd + home_length, 0x0D); }
-    else console::write(cwd, 0x0D);
+    console::write("[", 0x0D);
+    console::write(users[current_user].name, 0x0D);
+    console::write("@", 0x0D);
+    console::write(hostname, 0x0D);
+    console::write("]{", 0x0D);
+    console::write(cwd, 0x0D);
+    console::write("}", 0x0D);
 }
 void help() {
     console::write_line("Commands:", 0x0D);
-    console::write_line("  help clear version about echo pwd ls cd", 0x0B);
-    console::write_line("  add user <name>   switch user <name>", 0x0B);
-    console::write_line("  go back           go home           go root", 0x0B);
-    console::write_line("  touch mkdir rmdir write append cat rm", 0x0B);
+    console::write_line("  help [command]       show command help", 0x0B);
+    console::write_line("  clear                clear the screen", 0x0B);
+    console::write_line("  version about        show KyronOS version", 0x0B);
+    console::write_line("  echo <text>          print text", 0x0B);
+    console::write_line("  pwd                  print current directory", 0x0B);
+    console::write_line("  ls [directory]       list a directory", 0x0B);
+    console::write_line("  cd <directory>       change directory", 0x0B);
+    console::write_line("  go back|home|root    change to a known directory", 0x0B);
+    console::write_line("  touch <file>         create a file", 0x0B);
+    console::write_line("  mkdir <directory>    create a directory", 0x0B);
+    console::write_line("  rmdir <directory>    remove a directory", 0x0B);
+    console::write_line("  write <file> <text>   replace file contents", 0x0B);
+    console::write_line("  append <file> <text>  append to a file", 0x0B);
+    console::write_line("  cat <file>           print a file", 0x0B);
+    console::write_line("  rm <file>            remove a file", 0x0B);
     console::write_line("  devices mem reboot shutdown", 0x0B);
 }
-void list() {
-    for (uint32_t i = 0; i < max_entries; ++i) if (entries[i].used && entries[i].parent == current_directory) { console::write(entries[i].name); console::write_line(entries[i].directory ? "/" : ""); }
+void command_help(const char* name) {
+    if (equals(name, "ls")) console::write_line("ls [directory] - list entries in a directory.", 0x0B);
+    else if (equals(name, "cd")) console::write_line("cd <directory> - change to a directory.", 0x0B);
+    else if (equals(name, "pwd")) console::write_line("pwd - print the current directory.", 0x0B);
+    else if (equals(name, "touch")) console::write_line("touch <file> - create an empty file.", 0x0B);
+    else if (equals(name, "mkdir")) console::write_line("mkdir <directory> - create a directory.", 0x0B);
+    else if (equals(name, "rmdir")) console::write_line("rmdir <directory> - remove a directory.", 0x0B);
+    else if (equals(name, "write")) console::write_line("write <file> <text> - replace file contents.", 0x0B);
+    else if (equals(name, "append")) console::write_line("append <file> <text> - append to a file.", 0x0B);
+    else if (equals(name, "cat")) console::write_line("cat <file> - print file contents.", 0x0B);
+    else if (equals(name, "rm")) console::write_line("rm <file> - remove a file.", 0x0B);
+    else if (equals(name, "echo")) console::write_line("echo <text> - print text.", 0x0B);
+    else if (equals(name, "help")) console::write_line("help [command] - list commands or show command help.", 0x0B);
+    else if (equals(name, "clear")) console::write_line("clear - clear the console.", 0x0B);
+    else if (equals(name, "version") || equals(name, "about")) console::write_line("version/about - show KyronOS version.", 0x0B);
+    else if (equals(name, "devices")) console::write_line("devices - list detected hardware.", 0x0B);
+    else if (equals(name, "mem")) console::write_line("mem - show memory information.", 0x0B);
+    else if (equals(name, "reboot")) console::write_line("reboot - restart the machine.", 0x0B);
+    else if (equals(name, "shutdown")) console::write_line("shutdown - halt the machine.", 0x0B);
+    else console::write_line("No help is available for that command.", 0x0C);
+}
+void list(uint32_t directory) {
+    for (uint32_t i = 0; i < max_entries; ++i) if (entries[i].used && entries[i].parent == directory) { console::write(entries[i].name); console::write_line(entries[i].directory ? "/" : ""); }
 }
 void change_directory(const char* target) {
     uint32_t old_directory = current_directory;
@@ -115,30 +170,47 @@ uint32_t complete(char* buffer, uint32_t input_length, uint32_t capacity) {
     uint32_t start = input_length;
     while (start > 0 && buffer[start - 1] != ' ') --start;
     uint32_t prefix_length = input_length - start;
-    if (prefix_length == 0) return input_length;
+    uint32_t slash = prefix_length;
+    while (slash > 0 && buffer[start + slash - 1] != '/') --slash;
+    char directory_path[name_size];
+    for (uint32_t i = 0; i < slash; ++i) directory_path[i] = buffer[start + i];
+    directory_path[slash] = 0;
+    uint32_t directory = directory_for_path(directory_path, current_directory);
+    if (directory == max_entries) return input_length;
     char prefix[name_size];
-    for (uint32_t i = 0; i < prefix_length && i + 1 < name_size; ++i) prefix[i] = buffer[start + i];
-    prefix[prefix_length < name_size ? prefix_length : name_size - 1] = 0;
-    char common[name_size]; uint32_t common_length = 0; bool found = false;
-    for (uint32_t i = 0; i < max_entries; ++i) if (entries[i].used && entries[i].parent == current_directory) {
-        bool matches = true; for (uint32_t j = 0; j < prefix_length; ++j) if (entries[i].name[j] != prefix[j]) matches = false;
+    uint32_t name_prefix_length = prefix_length - slash;
+    for (uint32_t i = 0; i < name_prefix_length && i + 1 < name_size; ++i) prefix[i] = buffer[start + slash + i];
+    prefix[name_prefix_length < name_size ? name_prefix_length : name_size - 1] = 0;
+    char common[name_size]; uint32_t common_length = 0; uint32_t match_count = 0; bool found = false;
+    Entry* match = nullptr;
+    for (uint32_t i = 0; i < max_entries; ++i) if (entries[i].used && entries[i].parent == directory) {
+        bool matches = true; for (uint32_t j = 0; j < name_prefix_length; ++j) if (entries[i].name[j] != prefix[j]) matches = false;
         if (!matches) continue;
+        match = &entries[i];
+        ++match_count;
         if (!found) { copy(common, entries[i].name, name_size); common_length = length(common); found = true; }
         else { uint32_t j = 0; while (j < common_length && entries[i].name[j] == common[j]) ++j; common_length = j; common[j] = 0; }
     }
-    if (!found || common_length <= prefix_length) return input_length;
+    if (!found || (common_length <= name_prefix_length && !(match_count == 1 && common_length == name_prefix_length && match->directory))) return input_length;
     uint32_t new_length = input_length;
-    while (new_length < start + common_length && new_length + 1 < capacity) {
-        buffer[new_length] = common[new_length - start];
+    while (new_length < start + slash + common_length && new_length + 1 < capacity) {
+        buffer[new_length] = common[new_length - start - slash];
         ++new_length;
     }
+    if (match_count == 1 && match && match->directory && new_length == start + slash + common_length && new_length + 1 < capacity) buffer[new_length++] = '/';
     return new_length;
 }
 void command(char* line) {
     if (!*line) return;
+    uint32_t line_length = length(line);
+    if (line_length > 5 && line[line_length - 5] == ' ' && equals(line + line_length - 4, "help")) {
+        line[line_length - 5] = 0;
+        command_help(line);
+        return;
+    }
     if (equals(line, "help")) help();
     else if (equals(line, "clear")) console::clear();
-    else if (equals(line, "version") || equals(line, "about")) console::write_line("KyronOS 27 Alpha 1", 0x0D);
+    else if (equals(line, "version") || equals(line, "about")) console::write_line("KyronOS Alpha 2", 0x0D);
     else if (equals(line, "go back")) go_back();
     else if (equals(line, "go home")) go_home();
     else if (equals(line, "go root")) go_root();
@@ -146,14 +218,17 @@ void command(char* line) {
     else if (line[0] == 's' && line[1] == 'w' && line[2] == 'i' && line[3] == 't' && line[4] == 'c' && line[5] == 'h' && line[6] == ' ' && line[7] == 'u' && line[8] == 's' && line[9] == 'e' && line[10] == 'r' && line[11] == ' ') switch_user(line + 12);
     else if (line[0] == 'c' && line[1] == 'd' && line[2] == ' ') change_directory(argument(line));
     else if (equals(line, "pwd")) console::write_line(cwd, 0x0B);
-    else if (equals(line, "ls")) list();
+    else if (equals(line, "ls")) list(current_directory);
     else if (equals(line, "devices")) console::write_line("CPU: x86 | Keyboard: PS/2 | Storage: RAM KSFS", 0x0B);
-    else if (equals(line, "mem")) console::write_line("Memory information unavailable in Alpha 1 bootstrap.", 0x0D);
+    else if (equals(line, "mem")) console::write_line("Memory information unavailable in Alpha 2 bootstrap.", 0x0D);
     else if (equals(line, "reboot")) { asm volatile("cli; hlt"); }
     else if (equals(line, "shutdown")) { asm volatile("cli; hlt"); }
     else if (line[0] == 'e' && line[1] == 'c' && line[2] == 'h' && line[3] == 'o' && line[4] == ' ') console::write_line(argument(line));
     else if (line[0] == 'c' && line[1] == 'a' && line[2] == 't' && line[3] == ' ') { Entry* entry = find(argument(line), current_directory); if (entry && !entry->directory) console::write_line(entry->data); else console::write_line("File not found.", 0x0C); }
-    else if (line[0] == 'l' && line[1] == 's' && line[2] == ' ') list();
+    else if (line[0] == 'l' && line[1] == 's' && line[2] == ' ') {
+        uint32_t directory = directory_for_path(argument(line), current_directory);
+        if (directory == max_entries) console::write_line("Directory not found.", 0x0C); else list(directory);
+    }
     else if (line[0] == 't' && line[1] == 'o' && line[2] == 'u' && line[3] == 'c' && line[4] == 'h' && line[5] == ' ') console::write_line(create(argument(line), false, current_directory) ? "OK" : "Unable to create file.", 0x0B);
     else if (line[0] == 'm' && line[1] == 'k' && line[2] == 'd' && line[3] == 'i' && line[4] == 'r' && line[5] == ' ') console::write_line(create(argument(line), true, current_directory) ? "OK" : "Unable to create directory.", 0x0B);
     else if (line[0] == 'r' && line[1] == 'm' && line[2] == ' ') remove_entry(argument(line));
@@ -167,25 +242,34 @@ void command(char* line) {
 namespace shell {
 [[noreturn]] void run() {
     entries[0].used = true; entries[0].directory = true; entries[0].parent = 0; copy(entries[0].name, "/", name_size);
-    create("kyron", true, 0);
-    create("boot", true, 0);
-    create("system", true, 0);
-    create("etc", true, 0);
+    Entry* kyron_root = create("kyron", true, 0);
+    Entry* boot = create("boot", true, 0);
+    Entry* system = create("system", true, 0);
+    Entry* etc = create("etc", true, 0);
     Entry* home = create("home", true, 0);
     home_directory = static_cast<uint32_t>(home - entries);
     Entry* kyron_home = create("kyron", true, home_directory);
     users[0].used = true; users[0].home = static_cast<uint32_t>(kyron_home - entries); copy(users[0].name, "kyron", name_size);
-    create("tmp", true, 0);
-    create("dev", true, 0);
+    Entry* tmp = create("tmp", true, 0);
+    Entry* dev = create("dev", true, 0);
     create("bin", true, 0);
+    Entry* usr = create("usr", true, 0);
+    Entry* usr_bin = create("bin", true, static_cast<uint32_t>(usr - entries));
+    create_file("README", static_cast<uint32_t>(kyron_root - entries), "KyronOS system root.\n");
+    create_file("README", static_cast<uint32_t>(usr - entries), "System software and libraries.\n");
+    create_file("README", static_cast<uint32_t>(usr_bin - entries), "Installed commands live here.\n");
+    create_file("motd", static_cast<uint32_t>(system - entries), "Welcome to KyronOS Alpha 2.\n");
+    create_file("hostname", static_cast<uint32_t>(etc - entries), hostname);
+    create_file("README", static_cast<uint32_t>(boot - entries), "Boot files are managed by the installer.\n");
+    create_file("README", static_cast<uint32_t>(dev - entries), "Device nodes appear here.\n");
+    create_file("README", static_cast<uint32_t>(tmp - entries), "Temporary files live here.\n");
+    create_file("README", 0, "KyronOS Alpha 2 system root.\n");
+    current_directory = static_cast<uint32_t>(kyron_home - entries);
     refresh_path();
     char line[128];
-    console::write_line("Welcome to KyronOS 27 Alpha 1.", 0x0F);
+    console::write_line("Welcome to KyronOS Alpha 2.", 0x0F);
     console::write_line("Type 'help' for available commands.", 0x0B);
     while (true) {
-        console::write("[", 0x0D);
-        console::write(hostname, 0x0D);
-        console::write("]:", 0x0D);
         write_prompt_path();
         console::write("# ", 0x0D);
         keyboard::read_line(line, sizeof(line), complete);

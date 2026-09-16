@@ -6,7 +6,7 @@ extern "C" void kmain(uint32_t magic, uint32_t multiboot_info) {
     (void)multiboot_info;
     console::clear();
     console::write_line("+----------------------------------------------------------+", 0x09);
-    console::write_line("|                 KYRONOS 27 ALPHA 1                      |", 0x0D);
+    console::write_line("|                 KYRONOS ALPHA 2                         |", 0x0D);
     console::write_line("|                 KSFS SYSTEM                             |", 0x0B);
     console::write_line("+----------------------------------------------------------+", 0x09);
     console::write_line("");
