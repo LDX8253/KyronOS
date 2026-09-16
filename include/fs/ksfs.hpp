@@ -16,6 +16,7 @@ struct Superblock {
     uint32_t total_blocks;
     uint32_t free_blocks;
     uint32_t inode_table_block;
+    uint32_t inode_table_blocks;
     uint32_t inode_count;
     uint32_t root_inode;
     uint32_t bitmap_block;

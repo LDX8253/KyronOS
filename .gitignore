@@ -2,3 +2,4 @@ build/
 tests/*.o
 tests/ksfs_tests
 src/fs/ksfs.o
+tools/ksfs-mkfs
